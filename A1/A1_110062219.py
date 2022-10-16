@@ -7,6 +7,7 @@ import numpy as np
 import scipy as sp
 
 import scipy.linalg.blas as blas
+import scipy.linalg.lapack as lapack
 
 
 np.show_config()
@@ -19,15 +20,14 @@ for i in range(20):
     s = 0
 
     for j in range(10):
-        a = np.random.rand(n, n)
-        b = np.random.rand(n, n)
+        A = np.random.rand(n, n)
+        b = np.random.rand(n, 1)
 
         tik = time.perf_counter()
-        c = blas.dgemm(1, a, b)
+        lu, piv, x, info = lapack.dgesv(A, b)
         tok = time.perf_counter()
 
-        d = np.dot(a, b)
-        assert np.allclose(c, d)
+        assert np.allclose(np.dot(A, x), b)
 
         s += tok - tik
 
