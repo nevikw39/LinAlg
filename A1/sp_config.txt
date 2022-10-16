@@ -1,0 +1,21 @@
+lapack_mkl_info:
+    libraries = ['mkl_rt', 'pthread']
+    library_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/lib']
+    define_macros = [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)]
+    include_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/include']
+lapack_opt_info:
+    libraries = ['mkl_rt', 'pthread']
+    library_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/lib']
+    define_macros = [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)]
+    include_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/include']
+blas_mkl_info:
+    libraries = ['mkl_rt', 'pthread']
+    library_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/lib']
+    define_macros = [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)]
+    include_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/include']
+blas_opt_info:
+    libraries = ['mkl_rt', 'pthread']
+    library_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/lib']
+    define_macros = [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)]
+    include_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/include']
+

@@ -1,0 +1,25 @@
+blas_mkl_info:
+    libraries = ['mkl_rt', 'pthread']
+    library_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/lib']
+    define_macros = [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)]
+    include_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/include']
+blas_opt_info:
+    libraries = ['mkl_rt', 'pthread']
+    library_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/lib']
+    define_macros = [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)]
+    include_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/include']
+lapack_mkl_info:
+    libraries = ['mkl_rt', 'pthread']
+    library_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/lib']
+    define_macros = [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)]
+    include_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/include']
+lapack_opt_info:
+    libraries = ['mkl_rt', 'pthread']
+    library_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/lib']
+    define_macros = [('SCIPY_MKL_H', None), ('HAVE_CBLAS', None)]
+    include_dirs = ['/opt/ohpc/Taiwania3/pkg/intel/2022.2/intelpython/latest/include']
+Supported SIMD extensions in this NumPy install:
+    baseline = SSE,SSE2,SSE3,SSSE3,SSE41,POPCNT,SSE42
+    found = 
+    not found = AVX512_ICL
+
