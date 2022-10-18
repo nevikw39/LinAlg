@@ -1,0 +1,191 @@
+\documentclass[12pt, a4paper]{article}
+
+\title{\textsc{Linear Algebra} Assignment 1 Report}
+\author{110062219}
+\date{\today}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{listings}
+
+\lstset{
+	breaklines=true,
+	basicstyle=\ttfamily,
+}
+
+\definecolor{nthu}{HTML}{7F1084}
+
+% \renewcommand{\ttdefault}{pcr}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+In this assignment, we are to discover the basic of \texttt{numpy} \& \texttt{scipy}, and \textsf{BLAS} \& \textsf{LAPACK}.
+
+\section{Configurations}
+
+Below are my configurations of \texttt{numpy} and \texttt{scipy} respectively. I adopted the \textsf{Intel\textregistered\  Distributed Python} environment on the cluster supercomputer \textbf{Taiwania 3} of \textsf{NCHC} \textit{(National Center for High-performance Computing)}, which contains \textsf{Intel\textregistered\ MKL \itshape(Math Kernel Library)}.
+
+\subsection{\texttt{numpy}}
+
+\lstinputlisting{np_config.txt}
+
+\subsection{\texttt{scipy}}
+
+\lstinputlisting{sp_config.txt}
+
+\section{Naming convention for \textsf{BLAS} and \textsf{LAPACK}}
+
+%\textsf{BLAS} and \textsf{LAPACK} follow this manner to name their functions:
+
+\subsection{What are the naming convention, starting character \texttt{S}, \texttt{D}, \texttt{C}, \texttt{Z}, for \textsf{BLAS} and \textsf{LAPACK}?}
+
+Since \texttt{Fortran} used to have strict limit on the length of name of subroutines, \textsf{BLAS} and \textsf{LAPACK} had to name their subroutines in short.
+
+\begin{description}
+
+\item[\ttfamily S] Single-precision floating-point number
+\item[\ttfamily D] Double-precision floating-point number
+\item[\ttfamily C] Complex number
+\item[\ttfamily Z] Double-precision complex number
+
+\end{description}
+
+The first letter stands for the variable type shown above, the next two ones indicates the type of matrix, and the remains are the abbreviation of the operation.
+
+\subsection{What are the meaning of \texttt{SSPR2}, \texttt{ZGERC}, \texttt{DGBSVX} and \texttt{CHEEVR}?}
+
+The first two ones are from \textsf{BLAS} while the last two ones are from \textsf{LAPACK}.
+
+\begin{description}
+
+\item[\ttfamily SSPR2] Symmetric packed rank 2 operation $A\mathrel{+}=\alpha(xy^T+yx^T)$ for single-precision floating-point number
+\item[\ttfamily ZGERC] Rank 1 operation $A\mathrel{+}=\alpha x\overline{y^T}$ for double-precision complex number
+\item[\ttfamily DGBSVX] Computes the solution to system of linear equations $AX=B$ for \textit{General-Band} matrices.
+\item[\ttfamily CHEEVR] Computes the eigenvalues and, optionally, the left and / or right eigenvectors for \textit{Hermitian} matrices.
+
+\end{description}
+
+\section{Find the subroutine to solve a linear system $Ax=b$ in \textsf{LAPACK}, where $A$, $b$ are in double precision}
+
+The \texttt{\bfseries DGESV} \textit{(solve for double-precision general matrix)} subroutine from \textsf{LAPACK} has capability of solving the linear system like $Ax=b$. It applies \textsf{LU decomposition} to the matrix to perform \textsf{Gaussian elimiation} so as to find the solution.
+
+In the \texttt{scipy}-wrapped version \texttt{\bfseries DGESV} takes a matrix and a vector and return $LU$ matrix, $piv$ vector implying the permutation, the result $x$ and an integer indicating the status.
+
+In fact, in the implementation, \texttt{\bfseries DGESV} might call \texttt{DGETRF} and \texttt{DGETRS}, which do \textsf{LU decomposition} and find the solution respectively.
+
+\subsection{Try different matrix sizes and measure/plot their running time}
+
+I tried matrices of size $N=i\times10^3,\ \forall i\in[1, 20]\cap\mathbb{N}$. For each size the matrices were randomly generated and tested 10 times so as to take the average.
+
+The running time of each step is measured by \texttt{pref\_counter} came with Python time module, which may provide higher resolution. Even though the time to solve the largest matrix is about 5 seconds, the total time the job totally consumed was quite longer. I guess it may be due to the random processes took the most of time.
+
+The Python script was ran on a single full node of \textbf{Taiwania 3} which is equipped with 2 \textsf{Intel\textregistered\ Xeon\textregistered\ Platinum 8280} CPU sockets and 56 CPU cores in total.
+
+\begin{figure}[htbp]
+
+\begin{tikzpicture}
+    
+\begin{axis}[
+    xlabel=$N$,
+    x tick label style={scaled x ticks=base 10:-3},
+    ylabel={Time (\texttt{pref\_counter}) [s]},
+    width=\linewidth,
+    height=.625\linewidth,
+    enlargelimits=0.05,
+]
+\addplot[smooth, nthu, mark=asterisk] table [col sep=comma] {plot.csv};
+\end{axis}
+
+\end{tikzpicture}
+
+\caption{Time in seconds measured by \texttt{pref\_counter} of different matrix size $N$}
+\label{fig:plot}
+
+\end{figure}
+
+The outcome is illustrated in Figure \ref{fig:plot}. The curve looks like a parabola, but it has a tendency to drop a bit or reach somewhat local minima at $N=i\times10^3$ when $i>8$ and $i$ is odd. This result is quite \textit{``odd''}, which really astonished me.
+
+\subsection{How to verify the correctness of the solution EFFICIENTLY?}
+
+We could just substitute $x$ and check whether the dot product $Ax$ is equivalent to $b$. Note that since there are always inevitable \textbf{floating-point errors}, we couldn't use the ``\textit{==}'' operator directly. Instead, we should check if all differences of corresponding elements is less than a tolerance threshold, or so-called $\epsilon$. In \texttt{numpy}, there is \texttt{np.allclose()} function to help us realize this elementwisely. In fact, my assertion \texttt{np.allclose(np.dot(A, x), b)} failed once where $N=2\times10^4$ then, which might because the matrix was too large that the \textbf{floating-point error} accumulated and exceeded $\epsilon$.
+
+\section{Solve linear systems via block matrices}
+
+\begin{quote}
+
+``The reason why \textsf{BLAS}/\textsf{LAPACK} can be so effective on modern CPUs is that they utilize block matrix operation.''
+
+\end{quote}
+
+\subsection{How to use block matrix operation to solve a linear system $Ax=b$?}
+
+\begin{quote}
+
+``Derive the formula by partitioning $A$ into a $2\times 2$ block matrix.''
+
+\end{quote}
+
+Based on the above hint provided by TA, we could partition $A,x,b$ so that $\begin{pmatrix}A_{0,0}&A_{0,1}\\A_{1,0}&A_{1,1}\end{pmatrix}\begin{pmatrix}x_0\\x_1\end{pmatrix}=\begin{pmatrix}b_0\\b_1\end{pmatrix}$. If we would like to solve this, we could exert \textsf{LU decomposition} for block matrix.
+
+In the section 3, I discovered that it looks like that \textsf{LAPACK} do the  \textsf{PLU decomposition}. Nevertheless, I only found \textsf{LDU decomposition} for block matrix: $$\begin{pmatrix}A_{0,0}&A_{0,1}\\A_{1,0}&A_{1,1}\end{pmatrix}=\begin{pmatrix}I&O\\A_{1,0}A_{0,0}^{-1}&I\end{pmatrix}\begin{pmatrix}A_{0,0}&O\\O&A_{1,1}-A_{1,0}A_{0,0}^{-1}A_{0,1}\end{pmatrix}\begin{pmatrix}I&A_{0,0}^{-1}A_{0,1}\\O&I\end{pmatrix}$$. As a consequence, we could find the result of each entry of $x_0,x_1$ recursively.
+
+\subsection{Explain why a good matrix-matrix multiplication subroutine can accelerate the computation of solving $Ax = b$}
+
+Just as shown above, we could see that we would need a lot matrix multiplications while factoring the \textsf{LDU}. In particular, the \textbf{time complexity} could be expressed recursively as $T(n)=T(\frac{n}{2})+4F(n)+O(n^2)$, where $F(n)$ is the \textbf{time complexity} of matrix multiplication and $O(n^2)$ is the one of matrix addition.
+
+So let's discuss on the result of $T(n)$ of some $F(n)$ by \textbf{Master Theorem}\footnotemark:
+
+\begin{description}
+\item[$F(n)=O(n^3)$] This is the case of na\"{i}ve approach. Then $T(n)=T(\frac{n}{2})+O(n^3)=O(n^3)$.
+\item[$F(n)=O(n^{\log_27})$] This is the case of Strassen's algorithm in use. Then $T(n)=T(\frac{n}{2})+O(n^{\log_27})=O(n^{\log_27})$.
+\end{description}
+
+By observation, I found that since $\log_21=0$, $T(n)$ would be equal to $F(n)$ in the most cases so long as the degree of $F(n)$ is greater than 0 and 2. Therefore, the better we could do matrix multiplication, the better we could solve the linear system.
+
+\footnotetext{Just in case if needed: $$T(n) = aT(\frac{n}{b}) + O(n^d) = \left\{\begin{array}{ll}O(n^d), & d > \log_b a\\O(n^d\log n), & d =\log_b a\\O(n^{\log_b a}), & d < \log_b a\end{array}\right.$$}
+
+\section{What is the Strassen Matrix-Matrix Multiplication algorithm?}
+
+We are to calculate $C=AB$, where $A,B$ are square matrices. Without lost of generality, if the size of matrices is not a power of 2, we could add rows and columns with 0s.
+
+Then we could adopt the \textit{divide-and-conquer} strategy and partition the matrices into block matrices: $A=\begin{pmatrix}A_{0,0}&A_{0,1}\\A_{1,0}&A_{1,1}\end{pmatrix},B=\begin{pmatrix}B_{0,0}&B_{0,1}\\B_{1,0}&B_{1,1}\end{pmatrix},C=\begin{pmatrix}C_{0,0}&C_{0,1}\\C_{1,0}&C_{1,1}\end{pmatrix}$, where $A_{i,j},B_{i,j},C_{i,j}$ are matrices of size $2^{n-1}$.
+
+The na\"{i}ve algorithm would be $\begin{pmatrix}C_{0,0}&C_{0,1}\\C_{1,0}&C_{1,1}\end{pmatrix}=\begin{pmatrix} A_{0,0}B_{0,0}+A_{0,1}B_{1,0} & A_{0,0}B_{0,1}+A_{0,1}B_{1,1}\\ A_{1,0}B_{0,0}+A_{1,1}B_{1,0} & A_{1,0}B_{0,1}+A_{1,1}B_{1,1} \end{pmatrix}$. Strassen found that the following 7 matrices:
+\begin{align*}
+M_0=&(A_{0,0}+A_{1,1})(B_{0,0}+B_{1,1})\\
+M_1=&(A_{1,0}+A_{1,1})B_{0,0}\\
+M_2=&A_{0,0}(B_{0,1}-B_{1,1})\\
+M_3=&A_{1,1}(B_{1,0}-B_{0,0})\\
+M_4=&(A_{0,0}+A_{0,1})B_{1,1}\\
+M_5=&(A_{1,0}-A_{0,0})(B_{0,0}+B_{0,1})\\
+M_6=&(A_{0,1}-A_{1,1})(B_{1,0}+B_{1,1})\\
+\end{align*}
+such that $\begin{pmatrix}C_{0,0}&C_{0,1}\\C_{1,0}&C_{1,1}\end{pmatrix}=\begin{pmatrix} M_1+M_4-M_5+M_7 & M_3+M_5 \\ M_2+M_4 & M_1-M_2+M_3+M_6 \end{pmatrix}$.
+
+\subsection{Why it is faster than the conventional matrix-matrix multiplication algorithm in theory?}
+
+If we follow the definition to do the matrices multiplication, it's obvious that the \textbf{asymptotic time complexity} would be $O(n^3)$.
+
+After partitioning the matrices into block matrices and applying the \textit{divide-and-conquer} approach, we would have the recursion expression of \textbf{time complexity} $$T(n)=8T(\frac{n}{2})+O(n^2)$$ since we would have to do 8 smaller block matrices multiplications and the time to do matrices addtiions is $O(n^2)$. By the \textbf{Master Theorem}, we could solve that $$T(n)=O(n^{\log_28})=O(n^3)$$, which is the same as original.
+
+Yet in Strassen's method, we only need to do 7 multiplications. Hence the recursive \textbf{time complexity} becomes $$T(n)=7T(\frac{n}{2})+O(n^2)$$. So by the \textbf{Master Theorem} again, we have $$T(n)=O(n^{\log_27})\approx O(n^{2.8})$$, which is the first matrices multiplication algorithm ever that beats the definition.
+
+\subsection{Why people usually do not use it in practice for high performance computation?}
+
+Although nowadays there are some fancy algorithms that could do matrices multiplication in even $O(n^{2.3})$ approximately, most of them are not so practical at all since they're often too complex and with large constants in their \textbf{time complexity}. Still, Strassen's algorithm is of use in \textsf{BLAS}/\textsf{LAPACK} to some extent.
+
+When it comes to high-performance computing, since that the loop structure of original definition approach is in a form that is easy to be parallelized by \textsf{MPI (Message Passing Interface)} or \textsf{OpenMP (Open Multi-Processing)} across nodes or threads respectively, sometimes it might even outperform Strassen's algorithm or other sub-$O(n^3)$ algorithms.
+
+\section*{Acknowledgements}
+
+I thank to \textsf{National Center for High-performance Computing} \textit{(NCHC)} for providing computational and storage resources.
+
+\end{document}
