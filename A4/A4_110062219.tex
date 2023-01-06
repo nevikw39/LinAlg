@@ -1,0 +1,150 @@
+\documentclass[12pt, a4paper]{article}
+
+\title{\textsc{Linear Algebra} Assignment 4 Report}
+\author{110062219 翁君牧}
+\date{\today}
+
+\usepackage{xeCJK}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{biblatex}
+\usepackage{longtable}
+
+\lstset{
+	breaklines=true,
+	basicstyle=\ttfamily,
+}
+
+\definecolor{nthu}{HTML}{7F1084}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+%\listoffigures
+
+\section{Spam Emails I received}
+
+I selected 5 spam emails recently received from DockerCon, Slido, UberEATS, and other unknowns. They were submitted to the Google Form, saved to the comma-separated values file \texttt{A4\_110062219.csv} and marked to be in folder $[0,5)$ evenly.
+
+\section{Term Explanations of Text Mining}
+
+Below are the explanations of some terms regrading NLP \textit{(Natural Language Processing)}.
+
+\subsection{TF-IDF}
+
+\textit{Term frequency - inverse document frequency} is the product of \textbf{frequency} of a term and its \textbf{inverse document frequency}. Obviously \textbf{term frequency} is the ratio of total occurrence to total number of words. \textbf{Inverse document frequency} is defined as the natural logarithm of the ratio of number of documents to number of document containing the term.
+
+In the viewpoint of this factor, the weight of a term is proportional to its frequency, whereas its specificity is reduced logarithmically by the number of documents it occurs.
+
+\subsection{Stop Words}
+
+There are some words in our common languages that have little meaning. For instance, articles such as `a', `the' and prepositions such as `in`, `on` and other \textbf{function words} such as `which`, `where`, or \textbf{lexical words}.
+
+\section{Different Training/Testing Sets}
+
+There are 5 folders in the Kaggle data sets. Since we need select one to be the testing set while the lefts being the training set, there would be 5 combinations.
+
+\begin{table}[htp]
+\centering
+\caption{}
+\begin{tabular}{c|cccc|ccc}
+\toprule
+Testing Set \# & TP & FP & FN & TN & Accuracy & Precision & Recall \\
+\midrule
+0 & 202 & 0 & 67 & 870 & 0.94 & 1.00 & 0.75 \\
+1 & 220 & 0 & 68 & 877 & 0.94 & 1.00 & 0.76 \\
+2 & 199 & 1 & 70 & 877 & 0.94 & 0.99 & 0.74 \\
+3 & 194 & 0 & 71 & 871 & 0.93 & 1.00 & 0.73 \\
+4 & 208 & 1 & 74 & 861 & 0.93 & 0.99 & 0.73 \\
+\bottomrule
+\end{tabular}
+\label{tab:q3}
+\end{table}
+
+The elapsed time of each one is approximately 20 seconds on a full node of \textbf{Taiwania 3} with 56 cores.
+
+In statistics, not only \textbf{accuracy}, \textbf{precision} and \textbf{recall} also really count. For instance, most of emails daily might be ham. So if we have a model that always claims an incoming email to be ham, it's likely it would have high accuracy. Nevertheless, it's totally useless. Therefore, this is why \textbf{recall} matters.
+
+\section{Distance Computing via SVD}
+
+So as to compute the distance of a vector $\mathbf{v}$ to the column space of matrix $A$ via its SVD $U\Sigma V^H$, first we have the rank of a matrix to be the number of non-zero entries of $\Sigma$. Then we construct the orthonormal basis $\mathbf{b}$ of a matrix by the first $\operatorname{rank}(A)$ of $U$. The projection $\mathbf{p}$ is $\mathbf{b}\cdot(\mathbf{b}^T\cdot\mathbf{v})$ thereby. So the residual $\mathbf{r}$ is then $\mathbf{p}-\mathbf{v}$. Thus the desired distance is the norm of the residual.
+
+Note that since we have plenty of emails, i.e., vectors, we adopt matrix operations in practical. Moreover, we only need perform SVD of $S$, $H$ once for spam and ham testing sets.
+
+By the message\footnote{\url{https://eeclass.nthu.edu.tw/course/courseDiscuss/85854}} posted by the classmate on EEClass, I learnt that there's an argument of \texttt{numpy.linalg.svd()}, \texttt{full\_matrices}, which could further accelerate the efficiency about twice.
+
+\subsection{Difference Between Least Squares and SVD}
+
+Another problem we're concerned is that why the results of \texttt{numpy.linalg.lstsq()} and \texttt{numpy.linalg.svd()} differs and which one is more accurate. I tend to believe that it's since that when performing least squares, we need solve the normal equation and find the Garmian matrix $A^TA$, which is likely to introduce inevitable floating point errors during the numerical computations. Nonetheless, in our case, least square outperformed SVD a bit.
+
+\section{Lower Rank Approximation and Latent Semantic Analysis}
+
+One of the most important application of SVD is to perform matrix approximation with lower rank, which has something to do with LSA.
+
+\subsection{Different LRA}
+
+Our main goal is to reduce the \textbf{FN}, while keeping \textbf{FP} as little as possible. We could found that in general, the less the $\operatorname{rank}(H)$, the less the \textbf{FN} yet the more the \textbf{FP}; the more the $\operatorname{rank}(S)$, the less the \textbf{FN} yet the more the \textbf{FP}. The 3D graph of \textbf{FN} is illustrated in Figure \ref{fig:q5.1}.
+
+Below are the two pairs that give rise to overall optimal result:
+
+\begin{table}[htp]
+\centering
+\caption{}
+\begin{tabular}{cc|cccc|ccc}
+\toprule
+$\operatorname{rank}(S)$ & $\operatorname{rank}(H)$ & TP & FP & FN & TN & Accuracy & Precision & Recall \\
+\midrule
+200 & 300 & 272 & 2 & 10 & 860 & 0.99 & 0.99 & 0.96 \\
+600 & 600 & 274 & 4 & 8 & 858 & 0.99 & 0.99 & 0.97 \\
+\bottomrule
+\end{tabular}
+\label{tab:q5.1}
+\end{table}
+
+Initially, I didn't feel any difference of elapsed time among the combinations of $\operatorname{rank}(S)$ and $\operatorname{rank}(H)$. After measuring the exact time, we could found that the less the rank, a bit less the time it consumed.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=\linewidth,xlabel=$\operatorname{rank}(S)$, ylabel=$\operatorname{rank}(H)$, zlabel=FN]
+\addplot3[surf,mesh/cols=8,shader=interp] file {A4_110062219.dat};
+\end{axis}
+\end{tikzpicture}
+\caption{$\operatorname{rank}(S)$, $\operatorname{rank}(H)$ and FN}
+\label{fig:q5.1}
+\end{figure}
+
+\subsection{What's LSA?}
+
+In NLP, LSA is based on the distributional hypothesis, ``linguistic items under similar distribution would tend to share the same semantic''. As a consequence, we could reduce the size of our vocabulary while maintaining similar structure among documents.
+
+There are several benefits of LSA. For instance, our original term-document matrix may contain some noisy. By means of LSA, we could get rid of these undesired noisy. In addition, the original matrix may be too sparse so that we would like to discard some terms that aren't occurred in every documents. Lastly, smaller matrix could be operated more effective.
+
+\subsection{How to Tune the Best Ranks?}
+
+So how could we tune the best ranks of $S$ and $H$? It's just like what I did in the first subsection --- brute-force.
+
+I believe that what these ranks to be is what the parameters in the machine learning model to be. We have the residual -- the loss function -- and our objective is to minimize it.
+
+\section{Distance Computing via NMF}
+
+If we would like to compute the distance between a vector to the column space of a matrix $A$ via NMF $WH$, we could find that $W$ itself form a orthonormal basis. As a consequence, the remaining part is the same as SVD.
+
+In Python, Sci-Kit Learn package provides \texttt{sklearn.decomposition.NMF} model. Nevertheless, it requires quite a lot of time to perform the factorization. The default coordinate descent solver seemed not to utilize all CPU cores well. Though the multiplicative update solver worked better, it still took far slow than SVD. There are several initialization methods. \texttt{nndsvd} is quite faster than \texttt{nndsvda} and \texttt{nndsvdar} but there are warning about using \texttt{nndsvd} with multiplicative update.
+
+In addition, we could observe that the number of components play a significant role in the wall time, whereas the rank of SVD impact the time slightly. What's worse, the results of NMF are really poor.
+
+\section*{Acknowledgements}
+
+I thank to \textsf{National Center for High-performance Computing} \textit{(NCHC)} for providing computational and storage resources.
+
+\end{document}
